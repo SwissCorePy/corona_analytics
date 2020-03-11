@@ -8,12 +8,12 @@ import csv
 
 #### SETTINGS #####
 all_countries = False
-target_countries = ["Norway", "France", "Germany"]
+target_countries = ["Switzerland", "Poland", "Mainland China", "Italy"]
 
 # "M.d.yy"
-target_date = "3.10.20"
+target_date = ""
 
-work_offline = False
+work_offline = True
 
 ###################
 
@@ -67,7 +67,10 @@ def main():
             confirmed_csv = requests.get(base_url + confirmed_url, stream=True).content.decode("utf-8")
             deaths_csv = requests.get(base_url + deaths_url, stream=True).content.decode("utf-8")
             recovered_csv = requests.get(base_url + recovered_url, stream=True).content.decode("utf-8")
-            population_csv = requests.get(population_url, stream=True).content.decode("utf-8")
+
+            if not (os.path.exists(file_path + "World_Population.csv")):
+                population_csv = requests.get(population_url, stream=True).content.decode("utf-8")
+            population_csv = str(open(file_path + "World_Population.csv", "r", newline="\r\n").read())
 
             with open (file_path + "Confirmed.csv", "w", encoding="utf-8") as f:
                 f.write(confirmed_csv)
