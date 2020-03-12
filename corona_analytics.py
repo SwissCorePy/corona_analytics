@@ -7,13 +7,13 @@ from colorama import init as colorama_init
 import csv
 
 #### SETTINGS #####
-all_countries = False
-target_countries = ["Switzerland", "Poland", "Mainland China", "Italy"]
+all_countries = True
+target_countries = ["Switzerland", "Poland", "Mainland China", "Italy", "Netherlands", "Iran"]
 
 # "M.d.yy"
 target_date = ""
 
-work_offline = True
+work_offline = False
 
 ###################
 
@@ -24,12 +24,10 @@ c_magenta = Fore.MAGENTA
 c_reset = Style.RESET_ALL
 colorama_init(convert=True)
 
-file_path = "/".join(__file__.split("/")[:-1]) + "/" + "csv_files/"
+file_path = "/".join(__file__.split("/")[:-1]) + "/csv_files/"
 
 if not (os.path.exists(file_path)):
     os.mkdir(file_path)
-
-
 
 base_url = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/"
 
@@ -97,22 +95,25 @@ def main():
     for date in confirmed_data:
         print ("\nDate: " + magenta(date))
         for country in confirmed_data[date]:
-            if (country in target_countries or all_countries==True):
-                print ("  " + magenta(country) + ":")
+            if (country in target_countries or "Iran" in country or all_countries==True):
+                #print ("  " + magenta(country) + ":")
                 if not (country in last_percs):
                     last_percs[country] = 0.0
-                    
                 population = population_data[country]
                 confirmed = confirmed_data[date][country]
                 deaths = deaths_data[date][country]
                 recovered = recovered_data[date][country]
                 perc = (confirmed/population*100)
+                increased =  0.0 if ((last_percs[country] == 0.0)) else (perc/last_percs[country]*100)-100
                 print ("    Population: " + magenta(f"{population:,}"))
                 print ("    Confirmed : " + red(f"{confirmed:,}") + " | " + red(str("%.4f" % perc) + "%"))
                 print ("    Death     : " + red(f"{deaths:,}"))
                 print ("    Recovered : " + green(f"{recovered:,}"))
+                increased = "%.4f" % increased
+                print ("    + in 24h  : " + red(f"{increased}%"))
                 last_percs[country] = perc
 
+        return
 def percent (val, total):
     return 0.0 if (val == 0.0) else total/val*100
 
@@ -157,18 +158,55 @@ def read_population(csv_file):
     for row in data[1:]:
         country, population = None, None
         for key in row:
+            c = row[key]
+            if(c == "Others" 
+                or c == "Saint Barthelemy" 
+                or c == "French Guiana"
+                or c == "Taipei and environs"
+                or c == "occupied Palestinian territory"
+                or c == "Saint Martin"
+                or c == "Holy See"
+            ):
+                continue
             if (key == ""):
                 continue
             if (key == None):
                 populations = row[key]
+
                 while ("" in populations):
                     populations.remove("")
                 population = populations[-1]
             else:
-                if (row[key] == "China"):
+
+                # TODO: Exceptions for countries population
+                if (c == "China"):
                     country = "Mainland China"
+                elif (c == "Iran, Islamic Rep."):
+                    country = "Iran (Islamic Republic of)"
+                elif (c == "United States"):
+                    country = "US"
+                elif (c == "United Kingdom"):
+                    country = "UK"
+                elif (c == "Egypt, Arab Rep."):
+                    country = "Egypt"
+                elif (c == "Slovak Republic"):
+                    country = "Slovakia"
+                elif (c == "St. Martin (French part)"):
+                    country = "Martinique"
+                elif (c == "Brunei Darussalam"):
+                    country = "Brunei"
+                elif (c == "Korea, Rep."):
+                    country = "Republic of Korea"
+                elif (c == "Hong Kong SAR, China"):
+                    country = "Hong Kong SAR"
+                elif (c == "Vietnam"):
+                    country = "Viet Nam"
+                elif (c == "Macao SAR, China"):
+                    country = "Macao SAR"
+                elif (c == "Moldova"):
+                    country = "Republic of Moldova"
                 else:
-                    country = row[key]
+                    country = c
 
         #print (country + ": " + population)
         output_data[country] = 0 if (population == None or population == " " or population == "SP.POP.TOTL") else int(population)
