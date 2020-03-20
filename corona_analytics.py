@@ -7,13 +7,13 @@ from colorama import init as colorama_init
 import csv
 
 #### SETTINGS #####
-all_countries = True
-target_countries = ["Switzerland", "Poland", "Mainland China", "Italy", "Netherlands", "Iran"]
+all_countries = False
+target_countries = ["Switzerland", "Germany", "Italy"]
 
 # "M.d.yy"
 target_date = ""
 
-work_offline = False
+work_offline = True
 
 ###################
 
@@ -92,17 +92,26 @@ def main():
     population_data = read_population(population_csv)
     
     last_percs = {}
+
+    ww_population = 7594270356
+    
     for date in confirmed_data:
+        ww_confirmed = 0
+        ww_deaths = 0
+        ww_recovered = 0
         print ("\nDate: " + magenta(date))
         for country in confirmed_data[date]:
-            if (country in target_countries or "Iran" in country or all_countries==True):
-                #print ("  " + magenta(country) + ":")
+            if (country in target_countries or all_countries==True):
+                print ("  " + magenta(country) + ":")
                 if not (country in last_percs):
                     last_percs[country] = 0.0
                 population = population_data[country]
                 confirmed = confirmed_data[date][country]
                 deaths = deaths_data[date][country]
                 recovered = recovered_data[date][country]
+                ww_confirmed += confirmed
+                ww_deaths += deaths
+                ww_recovered += recovered
                 perc = (confirmed/population*100)
                 increased =  0.0 if ((last_percs[country] == 0.0)) else (perc/last_percs[country]*100)-100
                 print ("    Population: " + magenta(f"{population:,}"))
@@ -112,8 +121,21 @@ def main():
                 increased = "%.4f" % increased
                 print ("    + in 24h  : " + red(f"{increased}%"))
                 last_percs[country] = perc
+            else:
+                confirmed = confirmed_data[date][country]
+                deaths = deaths_data[date][country]
+                recovered = recovered_data[date][country]
+                ww_confirmed += confirmed
+                ww_deaths += deaths
+                ww_recovered += recovered
 
-        return
+        print(magenta("  World")+":")
+        ww_perc = ww_confirmed / ww_population * 100
+        print ("    Population: " + magenta(f"{ww_population:,}"))
+        print ("    Confirmed : " + red(f"{ww_confirmed:,}") + " | " + red(str("%.4f" % ww_perc) + "%"))
+        print ("    Death     : " + red(f"{ww_deaths:,}"))
+        print ("    Recovered : " + green(f"{ww_recovered:,}"))
+
 def percent (val, total):
     return 0.0 if (val == 0.0) else total/val*100
 
@@ -182,7 +204,7 @@ def read_population(csv_file):
                 if (c == "China"):
                     country = "Mainland China"
                 elif (c == "Iran, Islamic Rep."):
-                    country = "Iran (Islamic Republic of)"
+                    country = "Iran"
                 elif (c == "United States"):
                     country = "US"
                 elif (c == "United Kingdom"):
